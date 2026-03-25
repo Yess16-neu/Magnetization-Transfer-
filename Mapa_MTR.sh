@@ -29,16 +29,14 @@ USAGE
 exit 1
 }
 
-# =========================
+
 # Defaults
-# =========================
+
 register=0
 denoise=1
 output="MTR.nii.gz"
 
-# =========================
-# Parse args
-# =========================
+
 while getopts ":i:r:d:o:h" opt; do
   case "$opt" in
     i) input="$OPTARG" ;;
@@ -51,9 +49,9 @@ while getopts ":i:r:d:o:h" opt; do
   esac
 done
 
-# =========================
+
 # Validations
-# =========================
+
 [[ -z "$input" ]] && { echo "Error: missing -i"; Usage; }
 
 if [[ ! -f "$input" ]]; then
@@ -61,21 +59,21 @@ if [[ ! -f "$input" ]]; then
   exit 1
 fi
 
-echo "======================================"
-echo "      MTR Processing Pipeline"
-echo "======================================"
 
-# =========================
+echo "      MTR Processing Pipeline"
+
+
+
 # STEP 1: Split volumes
-# =========================
+
 echo "[1/4] Splitting MT volumes..."
 
 mrconvert "$input" imagen_sin_saturacion.nii.gz -coord 3 0
 mrconvert "$input" imagen_con_saturacion.nii.gz -coord 3 1
 
-# =========================
+
 # STEP 2: Registration
-# =========================
+
 if [[ "$register" -eq 1 ]]; then
   echo "[2/4] Registration (FLIRT)..."
 
@@ -92,9 +90,9 @@ else
   sat_img="imagen_con_saturacion.nii.gz"
 fi
 
-# =========================
+
 # STEP 3: Denoising
-# =========================
+
 if [[ "$denoise" -eq 1 ]]; then
   echo "[3/4] Denoising..."
 
@@ -115,17 +113,13 @@ else
   con_img="$sat_img"
 fi
 
-# =========================
-# STEP 4: MTR computation
-# =========================
-echo "[4/4] Computing MTR..."
+
+echo "[4/4] Generando mapa de MTR..."
 
 mrcalc "$sin_img" "$con_img" \
   -sub "$sin_img" \
   -div 100 \
   -mul "$output"
 
-echo ""
-echo "======================================"
-echo " MTR generated: $output"
-echo "======================================"
+
+echo " MTR generado: $output"
