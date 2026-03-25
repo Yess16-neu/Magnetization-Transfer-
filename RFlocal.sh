@@ -33,14 +33,13 @@ USAGE
 exit 1
 }
 
-# =========================
+
 # Defaults
-# =========================
+
 output_prefix="prefixdream"
 
-# =========================
-# Parse args
-# =========================
+
+
 while getopts ":s:f:m:o:h" opt; do
   case "$opt" in
     s) vol_STE="$OPTARG" ;;
@@ -53,9 +52,9 @@ while getopts ":s:f:m:o:h" opt; do
   esac
 done
 
-# =========================
+
 # Validaciones
-# =========================
+
 [[ -z "$vol_STE" ]] && { echo "Error: falta -s"; Usage; }
 [[ -z "$vol_FID" ]] && { echo "Error: falta -f"; Usage; }
 [[ -z "$archivo_method" ]] && { echo "Error: falta -m"; Usage; }
