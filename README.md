@@ -49,7 +49,7 @@ input.nii.gz
 
 
 ## Usage
-./mtr_pipeline.sh -i input4D.nii.gz [options]
+./Mapa_MTR.sh -i input4D.nii.gz [options]
 
 ### Required argument
 |Argument |	Description |
