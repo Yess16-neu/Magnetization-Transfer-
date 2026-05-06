@@ -44,8 +44,8 @@ while getopts ":i:r:d:o:h" opt; do
     d) denoise="$OPTARG" ;;
     o) output="$OPTARG" ;;
     h) Usage ;;
-    \?) echo "Invalid option: -$OPTARG"; Usage ;;
-    :) echo "Option -$OPTARG requires an argument"; Usage ;;
+    \?) echo "Opcion invalida: -$OPTARG"; Usage ;;
+    :) echo "Opcion -$OPTARG requiere un argumento"; Usage ;;
   esac
 done
 
@@ -55,12 +55,12 @@ done
 [[ -z "$input" ]] && { echo "Error: missing -i"; Usage; }
 
 if [[ ! -f "$input" ]]; then
-  echo "Error: input file not found: $input"
+  echo "Error: archivo de entrada no encontrado: $input"
   exit 1
 fi
 
 
-echo "      MTR Processing Pipeline"
+echo "      MTR Procesando Pipeline"
 
 
 
