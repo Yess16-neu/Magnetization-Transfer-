@@ -11,7 +11,7 @@ Example:
   $(basename "$0") -i input.nii.gz -r 1 -d 1
 
 Compulsory arguments:
-  -i    Input 4D image (PD MT dataset)
+  -i    Input 4D image 
 
 Optional arguments:
   -r    Perform registration (0/1) [default: 0]
@@ -66,7 +66,7 @@ echo "      MTR Processing Pipeline"
 
 # STEP 1: Split volumes
 
-echo "[1/4] Splitting MT volumes..."
+echo "[1/4] separando volumenes..."
 
 mrconvert "$input" imagen_sin_saturacion.nii.gz -coord 3 0
 mrconvert "$input" imagen_con_saturacion.nii.gz -coord 3 1
@@ -75,7 +75,7 @@ mrconvert "$input" imagen_con_saturacion.nii.gz -coord 3 1
 # STEP 2: Registration
 
 if [[ "$register" -eq 1 ]]; then
-  echo "[2/4] Registration (FLIRT)..."
+  echo "[2/4] registrando (FLIRT)..."
 
   flirt \
     -in imagen_con_saturacion.nii.gz \
@@ -86,7 +86,7 @@ if [[ "$register" -eq 1 ]]; then
 
   sat_img="imagen_con_saturacion_reg.nii.gz"
 else
-  echo "[2/4] Skipping registration"
+  echo "[2/4] Saltando registro"
   sat_img="imagen_con_saturacion.nii.gz"
 fi
 
@@ -94,7 +94,7 @@ fi
 # STEP 3: Denoising
 
 if [[ "$denoise" -eq 1 ]]; then
-  echo "[3/4] Denoising..."
+  echo "[3/4] Aplicando denoising..."
 
   DenoiseImage -d 3 \
     -i "$sat_img" \
@@ -107,7 +107,7 @@ if [[ "$denoise" -eq 1 ]]; then
   sin_img="imagen_sin_pulso_denoiseada.nii.gz"
   con_img="imagen_con_pulso_denoiseada.nii.gz"
 else
-  echo "[3/4] Skipping denoising"
+  echo "[3/4] Saltando denoising"
 
   sin_img="imagen_sin_saturacion.nii.gz"
   con_img="$sat_img"
