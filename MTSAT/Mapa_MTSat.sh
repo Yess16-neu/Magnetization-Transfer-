@@ -51,15 +51,14 @@ amarillo="\033[1;33m"
 azul="\033[1;34m"
 reset="\033[0m"
 
-# =========================
 # Defaults
-# =========================
+
 gaussianFilter=0
 matlab_dir=""
 
-# =========================
+
 # Parse args
-# =========================
+
 while getopts ":p:t:b:a:A:g:m:h" opt; do
   case "$opt" in
     p) pd_mtsat="$OPTARG" ;;
@@ -75,9 +74,9 @@ while getopts ":p:t:b:a:A:g:m:h" opt; do
   esac
 done
 
-# =========================
+
 # Validaciones de argumentos
-# =========================
+
 [[ -z "$pd_mtsat" ]] && { echo -e "${rojo}Error: falta -p${reset}"; Usage; }
 [[ -z "$t1_img"   ]] && { echo -e "${rojo}Error: falta -t${reset}"; Usage; }
 [[ -z "$b1_map"   ]] && { echo -e "${rojo}Error: falta -b${reset}"; Usage; }
