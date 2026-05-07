@@ -17,30 +17,29 @@ Example:
     -m /Users/yessenia_rizo/Documents/MATLAB
 
 Compulsory arguments:
-  -p    Archivo 4D sag_FLASH_PD_Mtsat.nii.gz
-  -t    Archivo T1 (ej. sag_FLASH_T1.nii.gz)
-  -b    Archivo B1 map (ej. prefixdreamDREAM_B1.nii.gz)
-  -a    Archivo acqp de la imagen PD_Mtsat
-  -A    Archivo acqp de la imagen T1
+  -p    file 4D sag_FLASH_PD_Mtsat.nii.gz
+  -t    file T1 (ej. sag_FLASH_T1.nii.gz)
+  -b    file B1 map (ej. prefixdreamDREAM_B1.nii.gz)
+  -a    file acqp of PD_Mtsat image
+  -A    file acqp of T1 image
 
 Optional arguments:
-  -g    Valor del filtro gaussiano [default: 0]
-  -m    Carpeta que contiene nii2mtsat.m [opcional]
-  -h    Mostrar esta ayuda
+  -g    Gaussian filter value [default: 0]
+  -m    Folder containing nii2mtsat.m [optional]
+  -h    Help
 
 Pipeline:
-  1) Separación de volúmenes MT
-  2) Lectura de scaling
-  3) Registro con FLIRT
-  4) Reaplicación de scaling
-  5) Extracción de TR y flip angle
+  1) Separation of MT volumes
+  2) Readinf of scaling factors
+  3) Registration with FLIRT
+  4) Reapplication of scaling factors
+  5) Extraction of TR and flip angle
   6) Denoising
-  7) Llamada a MATLAB / nii2mtsat
+  7) MATLAB / nii2mtsat call
 
 Notes:
-  - Requiere: mrconvert, mrinfo, flirt, DenoiseImage, matlab
-  - Si usas -m, esa carpeta se añade al path de MATLAB antes de llamar a nii2mtsat
-USAGE
+  - Requires: mrconvert, mrinfo, flirt, DenoiseImage, matlab
+  - If you use -m, that folder is added to the MATLAB path before calling nii2mtsat 
 exit 1
 }
 
@@ -75,7 +74,7 @@ while getopts ":p:t:b:a:A:g:m:h" opt; do
 done
 
 
-# Validaciones de argumentos
+# Argument validation
 
 [[ -z "$pd_mtsat" ]] && { echo -e "${rojo}Error: falta -p${reset}"; Usage; }
 [[ -z "$t1_img"   ]] && { echo -e "${rojo}Error: falta -t${reset}"; Usage; }
@@ -101,7 +100,7 @@ if [[ -n "$matlab_dir" && ! -d "$matlab_dir" ]]; then
 fi
 
 
-# Chequeo opcional de dependencias
+# Optional dependency check
 
 for cmd in mrconvert mrinfo flirt DenoiseImage matlab; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -112,7 +111,7 @@ done
 
 echo -e "${azul}======= Preparación de imágenes para MTSat =======${reset}"
 
-# === Función para leer scaling (offset, multiplier) ===
+# === Function to read scaling (offset, multiplier) ===
 get_scaling() {
   local img="$1"
   local line
@@ -148,14 +147,14 @@ check_and_fix_datatype() {
 }
 
 
-# 1) Separación de volúmenes
+# 1) Volume separation
 
 echo -e "${amarillo}[1/7] Separando volúmenes desde $pd_mtsat...${reset}"
 mrconvert "$pd_mtsat" imagen_sin_saturacion.nii.gz -coord 3 0 || exit 1
 mrconvert "$pd_mtsat" imagen_con_saturacion.nii.gz -coord 3 1 || exit 1
 
 
-# 2) Lectura de scaling
+# 2) Reading of scaling factors
 
 echo -e "${amarillo}[2/7] Leyendo Intensity scaling...${reset}"
 
@@ -172,21 +171,21 @@ echo -e "${verde}➤ MTon : offset=$off_mton  | multiplier=$mul_mton${reset}"
 echo -e "${verde}➤ T1   : offset=$off_t1    | multiplier=$mul_t1${reset}"
 
 
-# 3) Registro
+# 3) Registration
 
 echo -e "${amarillo}[3/7] Registrando imágenes con FLIRT...${reset}"
 flirt -in imagen_con_saturacion.nii.gz -ref imagen_sin_saturacion.nii.gz -out imagen_con_saturacion_registrada.nii.gz -dof 7 || exit 1
 flirt -in "$t1_img" -ref imagen_sin_saturacion.nii.gz -out imagen_T1_registrada.nii.gz -dof 7 || exit 1
 
 
-# 4) Reaplicar scaling tras FLIRT
+# 4) Reapply scaling after FLIRT
 
 echo -e "${amarillo}[4/7] Reaplicando scaling tras FLIRT...${reset}"
 mrconvert imagen_con_saturacion_registrada.nii.gz imagen_con_satu_reg_fix.nii.gz -datatype int16 -scaling 0,"$mul_mtoff" || exit 1
 mrconvert imagen_T1_registrada.nii.gz imagen_T1_reg_fix.nii.gz -datatype int16 -scaling 0,"$mul_t1" || exit 1
 
 
-# 5) Extracción de parámetros
+# 5) Parameter extraction
 
 echo -e "${amarillo}[5/7] Extrayendo TR y flip angle desde archivos acqp...${reset}"
 
@@ -211,13 +210,13 @@ DenoiseImage -d 3 -i imagen_T1_reg_fix.nii.gz -o T1_denoi.nii.gz || exit 1
 
 echo -e "${verde}Denoising completado correctamente.${reset}"
 
-# --- Reaplicar scaling tras Denoise ---
+# Reapply scaling after Denoise
 mrconvert imagen_sin_pulso_denoiseada.nii.gz imagen_sin_pulso_den_fix.nii.gz -datatype int16 -scaling 0,"$mul_mton" || exit 1
 mrconvert imagen_con_pulso_denoiseada.nii.gz imagen_con_pulso_den_fix.nii.gz -datatype int16 -scaling 0,"$mul_mtoff" || exit 1
 mrconvert T1_denoi.nii.gz imagen_T1_den_fix.nii.gz -datatype int16 -scaling 0,"$mul_t1" || exit 1
 
 
-# 7) Preparar B1 y ejecutar MATLAB
+# 7) Prepare B1 and run MATLAB
 
 echo -e "${amarillo}[7/7] Ejecutando MATLAB para calcular MTSat...${reset}"
 
