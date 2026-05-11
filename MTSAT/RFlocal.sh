@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Codigo para obtener RFlocal (B1 map)
+# RFlocal (B1 map)
 # Autor: Yessenia Garcia Rizo
 
 Usage() {
@@ -14,21 +14,21 @@ Example:
     -m method
 
 Compulsory arguments:
-  -s    Volumen STE (ej. STE.nii.gz)
-  -f    Volumen FID (ej. FID.nii.gz)
-  -m    Archivo method del mapa B1
+  -s    STE volume (e.g., STE.nii.gz)
+  -f    FID volume (e.g., FID.nii.gz)
+  -m    B1 map method file.
 
 Optional arguments:
-  -o    Prefijo de salida [default: prefixdream]
-  -h    Mostrar ayuda
+  -o    Output prefix [default: prefixdream]
+  -h    Help
 
 Pipeline:
-  1) Extraer valor ##$SteamPulse
-  2) Concatenar FID + STE
-  3) Ejecutar QI para generar mapa B1
+  1) Extract the ##$SteamPulse value.
+  2) Concatenate FID + STE.
+  3) Run QI to generate the B1 map.
 
 Notes:
-  - Requiere: mrcat (MRtrix3) y qi
+  - Requires: mrcat (MRtrix3) and QUIT (qi dream).
 USAGE
 exit 1
 }
@@ -53,7 +53,7 @@ while getopts ":s:f:m:o:h" opt; do
 done
 
 
-# Validaciones
+# Validations
 
 [[ -z "$vol_STE" ]] && { echo "Error: falta -s"; Usage; }
 [[ -z "$vol_FID" ]] && { echo "Error: falta -f"; Usage; }
@@ -74,7 +74,7 @@ if [[ ! -f "$archivo_method" ]]; then
   exit 1
 fi
 
-# Dependencias
+# Dependencies
 for cmd in mrcat qi; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "Error: comando '$cmd' no encontrado en PATH"
@@ -86,7 +86,7 @@ echo "      Generación de mapa B1 con QI"
 
 
 
-# 1) Extraer SteamPulse
+# 1) Extract SteamPulse
 
 echo "[1/3] Extrayendo ##\$SteamPulse desde method..."
 
@@ -107,7 +107,7 @@ fi
 echo "➤ SteamPulse = $valor_tercero"
 
 
-# 2) Concatenar volúmenes
+# 2) Concatenate volumes
 
 echo "[2/3] Concatenando FID + STE..."
 
@@ -119,7 +119,7 @@ mrcat -axis 3 "$vol_FID" "$vol_STE" dream_file.nii.gz || {
 echo "Archivo generado: dream_file.nii.gz"
 
 
-# 3) Ejecutar QI
+# 3) Run QI
 
 echo "[3/3] Generando mapa B1 con QI..."
 
