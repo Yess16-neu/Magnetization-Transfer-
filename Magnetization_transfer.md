@@ -63,7 +63,7 @@ The resulting B1 map can be used as the RF local map required for B1 correction 
 
 See the full documentation here:
 
-[RF local / B1 pipeline documentation](RFlocal/RFlocal.md)
+[RF local / B1 pipeline documentation](MTSAT/RFlocal.md)
 
 ---
 
