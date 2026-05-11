@@ -1,0 +1,191 @@
+# MTSat Processing Pipeline
+
+This folder contains a Bash pipeline for generating **Magnetization Transfer Saturation** (**MTSat**) maps from MRI data acquired with magnetization transfer preparation.
+
+The pipeline prepares the required images, performs registration, reapplies intensity scaling, extracts acquisition parameters from Bruker `acqp` files, applies denoising, and calls a MATLAB function to compute the final MTSat map.
+
+## Overview
+
+The script `Mapa_MTSat.sh` performs the following steps:
+
+1. Splits the 4D PD/MTSat image into:
+   - Image without saturation pulse
+   - Image with saturation pulse
+2. Reads intensity scaling information from the images.
+3. Registers the MT-on image and the T1-weighted image to the MT-off image using FSL FLIRT.
+4. Reapplies intensity scaling after registration.
+5. Extracts TR and flip angle values from Bruker `acqp` files.
+6. Applies denoising using ANTs `DenoiseImage`.
+7. Calls MATLAB and runs `nii2mtsat.m` to compute the MTSat map.
+
+## Required input files
+
+| File | Description |
+|---|---|
+| `PD_MTSAT.nii.gz` | 4D image containing the MT-off and MT-on volumes |
+| `T1_IMG.nii.gz` | T1-weighted image |
+| `B1_MAP.nii.gz` | B1 map / RF local map |
+| `acqpPD` | Bruker acquisition parameter file for the PD/MTSat image |
+| `acqpT1` | Bruker acquisition parameter file for the T1 image |
+| `nii2mtsat.m` | MATLAB function used to compute the MTSat map |
+
+**Note:** The `nii2mtsat.m` function calls `calcMTsat.m`, so both MATLAB files must be located in the same folder.
+
+The 4D PD/MTSat image must contain two volumes:
+
+| Volume | Description |
+|---|---|
+| Volume 0 | Image without saturation pulse |
+| Volume 1 | Image with saturation pulse |
+
+## Requirements
+
+The following tools must be installed and available in your system `PATH`:
+
+- MRtrix3
+  - `mrconvert`
+  - `mrinfo`
+- FSL
+  - `flirt`
+- ANTs
+  - `DenoiseImage`
+- MATLAB
+- Bash
+
+## Usage
+
+```bash
+./Mapa_MTSat.sh -p PD_MTSAT.nii.gz -t T1_IMG.nii.gz -b B1_MAP.nii.gz -a acqpPD -A acqpT1 [options]
+```
+
+## Required arguments
+
+| Argument | Description |
+|---|---|
+| `-p` | 4D PD/MTSat image, for example `sag_FLASH_PD_Mtsat.nii.gz` |
+| `-t` | T1-weighted image, for example `sag_FLASH_T1.nii.gz` |
+| `-b` | B1 map / RF local map, for example `prefixdreamDREAM_B1.nii.gz` |
+| `-a` | `acqp` file for the PD/MTSat acquisition |
+| `-A` | `acqp` file for the T1 acquisition |
+
+## Optional arguments
+
+| Argument | Description | Default |
+|---|---|---|
+| `-g` | Gaussian filter value passed to MATLAB | `0` |
+| `-m` | Folder containing `nii2mtsat.m` | Optional |
+| `-h` | Show help message | — |
+
+## Example
+
+```bash
+./Mapa_MTSat.sh \
+  -p sag_FLASH_PD_Mtsat.nii.gz \
+  -t sag_FLASH_T1.nii.gz \
+  -b prefixdreamDREAM_B1.nii.gz \
+  -a acqpPD \
+  -A acqpT1 \
+  -g 0 \
+  -m /Users/yessenia_rizo/Documents/MATLAB
+```
+
+## Pipeline details
+
+### 1. Split MT volumes
+
+The 4D PD/MTSat image is split into two 3D images:
+
+```text
+imagen_sin_saturacion.nii.gz
+imagen_con_saturacion.nii.gz
+```
+
+### 2. Read intensity scaling
+
+The script reads the intensity scaling information from the images using `mrinfo`. This includes:
+
+- Offset
+- Multiplier
+
+These values are later used to preserve intensity consistency after registration and denoising.
+
+### 3. Registration
+
+The following images are registered to the image without saturation pulse:
+
+- Image with saturation pulse
+- T1-weighted image
+
+Registration is performed using FSL FLIRT.
+
+### 4. Reapply intensity scaling
+
+After registration, the script reapplies the corresponding intensity scaling values to preserve signal consistency between images.
+
+### 5. Extract acquisition parameters
+
+The script extracts the following parameters from the Bruker `acqp` files:
+
+- TR for the PD/MTSat image
+- TR for the T1 image
+- Flip angle for the PD/MTSat image
+- Flip angle for the T1 image
+
+These values are passed to MATLAB for the MTSat calculation.
+
+### 6. Denoising
+
+Denoising is applied using ANTs `DenoiseImage` to:
+
+- Image without saturation pulse
+- Registered image with saturation pulse
+- Registered T1-weighted image
+
+### 7. MTSat computation in MATLAB
+
+The final MTSat map is computed using the MATLAB function `nii2mtsat.m`.
+
+The MATLAB function receives:
+
+- MT-on image
+- MT-off image
+- T1-weighted image
+- B1 / RF local map
+- Gaussian filter value
+- Flip angles
+- TR values
+
+## Intermediate files
+
+The pipeline generates several intermediate files in the current working directory:
+
+```text
+imagen_sin_saturacion.nii.gz
+imagen_con_saturacion.nii.gz
+imagen_con_saturacion_registrada.nii.gz
+imagen_T1_registrada.nii.gz
+imagen_con_satu_reg_fix.nii.gz
+imagen_T1_reg_fix.nii.gz
+imagen_sin_pulso_denoiseada.nii.gz
+imagen_con_pulso_denoiseada.nii.gz
+T1_denoi.nii.gz
+imagen_sin_pulso_den_fix.nii.gz
+imagen_con_pulso_den_fix.nii.gz
+imagen_T1_den_fix.nii.gz
+```
+
+## Output
+
+The main output is the MTSat map generated by `nii2mtsat.m`.
+
+The exact output filename depends on the implementation of the MATLAB function.
+
+
+## Important notes
+
+- The B1 map must correspond to the same subject and acquisition session as the PD/MTSat and T1 images.
+- The B1 map should be spatially compatible with the MT and T1 images.
+- The script generates intermediate files in the current directory.
+- Running the script multiple times in the same folder may overwrite intermediate files.
+- Visual inspection of the registered and denoised images is recommended before interpreting the final MTSat map.
+- If using the `-m` option, the folder must contain `nii2mtsat.m`.
